@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String      @id @default(cuid())
+  username          String      @unique
+  name              String
+  email             String      @unique
+  timezone          String      @default("UTC")
+  avatarUrl         String?
+  defaultScheduleId String?
+
+  eventTypes EventType[]
+  schedules  Schedule[]
+  bookings   Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EventType {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String
+  description String?
+  length      Int      // duration in minutes
+  color       String   @default("#0ea5e9")
+  isActive    Boolean  @default(true)
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheduleId String?
+  schedule   Schedule? @relation(fields: [scheduleId], references: [id])
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, slug])
+}
+
+model Schedule {
+  id       String @id @default(cuid())
+  name     String
+  timezone String @default("UTC")
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  availability Availability[]
+  eventTypes   EventType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Availability {
+  id         String   @id @default(cuid())
+  // days of week: 0=Sun, 1=Mon, ..., 6=Sat
+  // Empty array means this is a date override
+  days       Int[]
+  startTime  DateTime @db.Time
+  endTime    DateTime @db.Time
+  // If set, this row is a date override for this specific date
+  date       DateTime? @db.Date
+  // If date is set and isBlocked=true, the whole day is blocked
+  isBlocked  Boolean  @default(false)
+
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  uid              String        @unique @default(uuid())
+  title            String
+  startTime        DateTime
+  endTime          DateTime
+  status           BookingStatus @default(PENDING)
+  cancellationNote String?
+  // If rescheduled, store original booking uid
+  rescheduledFrom  String?
+
+  eventTypeId String
+  eventType   EventType @relation(fields: [eventTypeId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  attendee Attendee?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+  RESCHEDULED
+}
+
+model Attendee {
+  id        String  @id @default(cuid())
+  name      String
+  email     String
+  timezone  String  @default("UTC")
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
