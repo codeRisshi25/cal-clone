@@ -11,8 +11,8 @@ import type {
   CreateBookingBody,
   CancelBookingBody,
   RescheduleBookingBody,
-  TimeSlot,
   PublicProfile,
+  User,
 } from "@cal-clone/types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -91,9 +91,26 @@ export function getPublicProfile(username: string): Promise<PublicProfile> {
   return request(`/api/public/${username}`);
 }
 
-export function getSlots(username: string, slug: string, date: string, timezone: string): Promise<TimeSlot[]> {
+// GET /api/public/:username/:slug — returns { user, eventType } for booking page header
+export function getEventTypeBySlug(
+  username: string,
+  slug: string
+): Promise<{ user: Pick<User, "username" | "name" | "timezone">; eventType: EventType }> {
+  return request(`/api/public/${username}/${slug}`);
+}
+
+// GET /api/public/:username/:slug/slots — backend returns { slots: string[] } (ISO UTC datetimes)
+export async function getSlots(
+  username: string,
+  slug: string,
+  date: string,
+  timezone: string
+): Promise<string[]> {
   const params = new URLSearchParams({ date, tz: timezone });
-  return request(`/api/public/${username}/${slug}/slots?${params}`);
+  const data = await request<{ slots: string[] }>(
+    `/api/public/${username}/${slug}/slots?${params}`
+  );
+  return data.slots;
 }
 
 export function createBooking(
@@ -106,4 +123,9 @@ export function createBooking(
 
 export function getBookingByUid(uid: string): Promise<Booking> {
   return request(`/api/public/bookings/${uid}`);
+}
+
+// POST /api/public/bookings/:uid/cancel — attendee self-cancel
+export function cancelBookingByUid(uid: string, body: CancelBookingBody): Promise<Booking> {
+  return request(`/api/public/bookings/${uid}/cancel`, { method: "POST", body: JSON.stringify(body) });
 }
