@@ -1,0 +1,25 @@
+{
+  "name": "cal-clone",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "db:generate": "pnpm --filter @cal-clone/db prisma generate",
+    "db:migrate": "pnpm --filter @cal-clone/db prisma migrate deploy",
+    "db:migrate:dev": "pnpm --filter @cal-clone/db prisma migrate dev",
+    "db:seed": "pnpm --filter @cal-clone/api seed",
+    "db:studio": "pnpm --filter @cal-clone/db prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.5",
+    "prettier": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@10.18.0"
+}
