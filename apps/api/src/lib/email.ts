@@ -40,6 +40,48 @@ export async function sendBookingConfirmation(opts: {
   });
 }
 
+// Send reschedule notification email
+export async function sendRescheduleEmail(opts: {
+  attendeeName: string;
+  attendeeEmail: string;
+  hostName: string;
+  eventTitle: string;
+  oldStartTime: Date;
+  newStartTime: Date;
+  timezone: string;
+  newBookingUid: string;
+}) {
+  const { attendeeName, attendeeEmail, hostName, eventTitle, oldStartTime, newStartTime, timezone, newBookingUid } = opts;
+
+  const oldFormatted = oldStartTime.toLocaleString("en-US", {
+    timeZone: timezone,
+    dateStyle: "full",
+    timeStyle: "short",
+  });
+  const newFormatted = newStartTime.toLocaleString("en-US", {
+    timeZone: timezone,
+    dateStyle: "full",
+    timeStyle: "short",
+  });
+
+  const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${newBookingUid}`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: attendeeEmail,
+    subject: `Rescheduled: ${eventTitle} with ${hostName}`,
+    html: `
+      <h2>Your meeting has been rescheduled</h2>
+      <p>Hi ${attendeeName},</p>
+      <p>Your <strong>${eventTitle}</strong> with <strong>${hostName}</strong> has been rescheduled.</p>
+      <p><s>${oldFormatted} (${timezone})</s></p>
+      <p><strong>New time: ${newFormatted} (${timezone})</strong></p>
+      <br/>
+      <p><a href="${bookingUrl}">View booking details</a></p>
+    `,
+  });
+}
+
 // Send cancellation email
 export async function sendCancellationEmail(opts: {
   attendeeName: string;
