@@ -40,7 +40,7 @@ export function createEventType(body: CreateEventTypeBody): Promise<EventType> {
 }
 
 export function updateEventType(id: string, body: UpdateEventTypeBody): Promise<EventType> {
-  return request(`/api/admin/event-types/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+  return request(`/api/admin/event-types/${id}`, { method: "PUT", body: JSON.stringify(body) });
 }
 
 export function deleteEventType(id: string): Promise<void> {
@@ -92,7 +92,7 @@ export function getPublicProfile(username: string): Promise<PublicProfile> {
 }
 
 export function getSlots(username: string, slug: string, date: string, timezone: string): Promise<TimeSlot[]> {
-  const params = new URLSearchParams({ date, timezone });
+  const params = new URLSearchParams({ date, tz: timezone });
   return request(`/api/public/${username}/${slug}/slots?${params}`);
 }
 
