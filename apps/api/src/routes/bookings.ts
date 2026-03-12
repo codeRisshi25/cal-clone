@@ -3,7 +3,7 @@ import type { Router as RouterType } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
 import { cacheGet, cacheSet, cacheDel, TTL } from "../lib/redis";
-import { sendCancellationEmail } from "../lib/email";
+import { sendCancellationEmail, sendRescheduleEmail } from "../lib/email";
 
 const router: RouterType = Router();
 const ADMIN_USERNAME = "risshi";
@@ -124,6 +124,21 @@ router.post("/:id/reschedule", async (req: Request, res: Response) => {
   });
 
   await cacheDel("bookings:admin:upcoming", "bookings:admin:past");
+
+  // Send reschedule notification email — fire and forget
+  if (booking.attendee) {
+    sendRescheduleEmail({
+      attendeeName: booking.attendee.name,
+      attendeeEmail: booking.attendee.email,
+      hostName: "Risshi",
+      eventTitle: booking.eventType.title,
+      oldStartTime: booking.startTime,
+      newStartTime: newStart,
+      timezone: booking.attendee.timezone,
+      newBookingUid: newBooking.uid,
+    }).catch(console.error);
+  }
+
   return res.json(newBooking);
 });
 
