@@ -1,0 +1,44 @@
+version: "3.9"
+
+# ─── Dev compose — runs postgres + redis locally so you can test the frontend ───
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d   (start)
+#   docker compose -f docker-compose.dev.yml down     (stop)
+#
+# Then in separate terminals:
+#   pnpm --filter @cal-clone/api dev     (starts API on :8000)
+#   pnpm --filter @cal-clone/web dev     (starts Next.js on :3000)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: calclone-dev-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calclone_dev
+    ports:
+      - "5433:5432"   # 5433 on host so it doesn't clash with the test DB on 5432
+    volumes:
+      - calclone_dev_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: calclone-dev-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  calclone_dev_pg:
