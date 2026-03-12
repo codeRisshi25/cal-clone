@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -170,6 +171,16 @@ export default function EventTypesPage() {
     }
   }
 
+  // Toggle isActive on the event type (show/hide from public page)
+  async function handleToggleActive(et: EventType) {
+    try {
+      const updated = await api.updateEventType(et.id, { isActive: !et.isActive });
+      setEventTypes((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Toggle failed");
+    }
+  }
+
   function copyLink(et: EventType) {
     const url = `${window.location.origin}/risshi/${et.slug}`;
     navigator.clipboard.writeText(url);
@@ -177,133 +188,155 @@ export default function EventTypesPage() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
+  // ── Loading skeleton ────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-4">
+      <div className="p-6 md:p-8 max-w-4xl">
+        <div className="animate-pulse space-y-0 border border-cal-border-subtle rounded-md overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-gray-100 rounded-lg" />
+            <div key={i} className="h-[72px] bg-cal-bg-subtle border-b border-cal-border-subtle last:border-0" />
           ))}
         </div>
       </div>
     );
   }
 
+  // ── Error state ─────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="p-8">
-        <p className="text-red-500">{error}</p>
+      <div className="p-6 md:p-8">
+        <p className="text-destructive text-sm">{error}</p>
         <Button className="mt-4" onClick={loadEventTypes}>Retry</Button>
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl">
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-6 md:p-8 max-w-4xl">
+      {/* ── Page header ──────────────────────────────────────────── */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Event Types</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-xl font-semibold text-cal-text-emphasis">Event Types</h1>
+          <p className="text-sm text-cal-text-subtle mt-0.5">
             Create events to share for people to book on your calendar.
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
+        <Button onClick={openCreate} size="sm" className="gap-1.5">
           <Plus className="w-4 h-4" />
-          New event type
+          New
         </Button>
       </div>
 
-      {/* Empty state */}
+      {/* ── Empty state ──────────────────────────────────────────── */}
       {eventTypes.length === 0 && (
-        <div className="text-center py-16 border rounded-lg bg-white">
-          <Link2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No event types yet.</p>
-          <Button onClick={openCreate} variant="outline" className="mt-4 gap-2">
+        <div className="text-center py-16 border border-cal-border-subtle rounded-md bg-cal-bg">
+          <Link2 className="w-10 h-10 text-cal-text-muted mx-auto mb-3" />
+          <p className="text-cal-text-subtle text-sm">No event types yet.</p>
+          <Button onClick={openCreate} variant="outline" size="sm" className="mt-4 gap-1.5">
             <Plus className="w-4 h-4" />
             Create your first event type
           </Button>
         </div>
       )}
 
-      {/* Event type cards */}
-      <div className="space-y-3">
-        {eventTypes.map((et) => (
-          <div
-            key={et.id}
-            className="flex items-center gap-4 bg-white border rounded-lg px-5 py-4 hover:border-gray-300 transition-colors group"
-          >
-            {/* Color dot */}
+      {/* ── Unified list (Cal.com style) ─────────────────────────── */}
+      {eventTypes.length > 0 && (
+        <div className="border border-cal-border-subtle rounded-md overflow-hidden bg-cal-bg divide-y divide-cal-border-subtle">
+          {eventTypes.map((et) => (
             <div
-              className="w-3 h-3 rounded-full flex-shrink-0"
-              style={{ backgroundColor: et.color }}
-            />
+              key={et.id}
+              className="flex w-full items-center justify-between px-4 sm:px-6 py-4 hover:bg-cal-bg-muted transition-colors group"
+            >
+              {/* Left: color bar + info */}
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                {/* Thin vertical color bar (Cal.com style, not a circle) */}
+                <div
+                  className="w-1 h-8 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: et.color }}
+                />
 
-            {/* Title + meta */}
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 text-sm">{et.title}</p>
-              <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {et.length} min
-                </span>
-                <span className="flex items-center gap-1">
-                  <Link2 className="w-3 h-3" />
-                  /{et.slug}
-                </span>
+                <div className="min-w-0 flex-1">
+                  {/* Title + slug inline */}
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-cal-text-emphasis truncate">
+                      {et.title}
+                    </p>
+                    <span className="text-xs text-cal-text-muted hidden sm:inline">
+                      /{et.slug}
+                    </span>
+                  </div>
+                  {/* Duration */}
+                  <div className="flex items-center gap-1.5 mt-0.5 text-xs text-cal-text-subtle">
+                    <Clock className="w-3 h-3" />
+                    <span>{et.length}m</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: actions + toggle */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Action buttons — show on hover (desktop), always visible on mobile */}
+                <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={copiedId === et.id ? "Copied!" : "Copy link"}
+                    onClick={() => copyLink(et)}
+                    className="h-8 w-8 text-cal-text-subtle hover:text-cal-text-emphasis"
+                  >
+                    {copiedId === et.id ? (
+                      <span className="text-emerald-500 text-xs font-medium">✓</span>
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Preview"
+                    className="h-8 w-8 text-cal-text-subtle hover:text-cal-text-emphasis"
+                    asChild
+                  >
+                    <a href={`/risshi/${et.slug}`} target="_blank" rel="noreferrer">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Edit"
+                    onClick={() => openEdit(et)}
+                    className="h-8 w-8 text-cal-text-subtle hover:text-cal-text-emphasis"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Delete"
+                    onClick={() => setDeleteTarget(et)}
+                    className="h-8 w-8 text-destructive/60 hover:text-destructive"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+
+                {/* Divider */}
+                <div className="hidden sm:block w-px h-6 bg-cal-border-subtle mx-1" />
+
+                {/* Show/hide toggle (Cal.com has this on every row) */}
+                <Switch
+                  checked={et.isActive}
+                  onCheckedChange={() => handleToggleActive(et)}
+                  aria-label={et.isActive ? "Hide event type" : "Show event type"}
+                />
               </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            {/* Actions */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="icon"
-                title={copiedId === et.id ? "Copied!" : "Copy link"}
-                onClick={() => copyLink(et)}
-                className="h-8 w-8"
-              >
-                {copiedId === et.id ? (
-                  <span className="text-green-500 text-xs font-medium">✓</span>
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Preview booking page"
-                className="h-8 w-8"
-                asChild
-              >
-                <a href={`/risshi/${et.slug}`} target="_blank" rel="noreferrer">
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Edit"
-                onClick={() => openEdit(et)}
-                className="h-8 w-8"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Delete"
-                onClick={() => setDeleteTarget(et)}
-                className="h-8 w-8 text-red-400 hover:text-red-600"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Create / Edit modal */}
+      {/* ── Create / Edit modal ──────────────────────────────────── */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -324,7 +357,7 @@ export default function EventTypesPage() {
             <div className="space-y-1.5">
               <Label htmlFor="et-slug">URL slug</Label>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400 flex-shrink-0">/risshi/</span>
+                <span className="text-sm text-cal-text-muted flex-shrink-0">/risshi/</span>
                 <Input
                   id="et-slug"
                   placeholder="quick-sync"
@@ -340,7 +373,7 @@ export default function EventTypesPage() {
               <Label htmlFor="et-description">Description (optional)</Label>
               <Textarea
                 id="et-description"
-                placeholder="A brief description of this event…"
+                placeholder="A brief description of this event..."
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={3}
@@ -371,7 +404,7 @@ export default function EventTypesPage() {
                     className="w-7 h-7 rounded-full border-2 transition-all"
                     style={{
                       backgroundColor: c,
-                      borderColor: form.color === c ? "black" : "transparent",
+                      borderColor: form.color === c ? "hsl(var(--cal-brand))" : "transparent",
                       transform: form.color === c ? "scale(1.15)" : "scale(1)",
                     }}
                     title={c}
@@ -386,13 +419,13 @@ export default function EventTypesPage() {
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving || !form.title || !form.slug}>
-              {saving ? "Saving…" : editing ? "Save changes" : "Create"}
+              {saving ? "Saving..." : editing ? "Save changes" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
+      {/* ── Delete confirmation ──────────────────────────────────── */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -409,7 +442,7 @@ export default function EventTypesPage() {
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

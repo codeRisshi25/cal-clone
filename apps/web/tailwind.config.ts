@@ -9,6 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        /* shadcn/ui standard */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -41,6 +42,30 @@ const config: Config = {
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
+        },
+
+        /* Cal.com semantic palette */
+        cal: {
+          bg: {
+            DEFAULT: "hsl(var(--cal-bg))",
+            subtle: "hsl(var(--cal-bg-subtle))",
+            muted: "hsl(var(--cal-bg-muted))",
+            emphasis: "hsl(var(--cal-bg-emphasis))",
+          },
+          text: {
+            emphasis: "hsl(var(--cal-text-emphasis))",
+            DEFAULT: "hsl(var(--cal-text))",
+            subtle: "hsl(var(--cal-text-subtle))",
+            muted: "hsl(var(--cal-text-muted))",
+          },
+          border: {
+            subtle: "hsl(var(--cal-border-subtle))",
+            muted: "hsl(var(--cal-border-muted))",
+          },
+          brand: {
+            DEFAULT: "hsl(var(--cal-brand))",
+            text: "hsl(var(--cal-brand-text))",
+          },
         },
       },
       borderRadius: {

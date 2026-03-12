@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -18,86 +17,123 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
-// Format "Jan 12, 2026 · 2:30 PM – 3:00 PM" from ISO strings
-function formatBookingTime(startTime: string, endTime: string): string {
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-  const date = start.toLocaleDateString("en-US", {
+// ── helpers ──────────────────────────────────────────────────────────
+
+// "Mon, Jan 12" style short date
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
     month: "short",
     day: "numeric",
-    year: "numeric",
   });
-  const startStr = start.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  const endStr = end.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${date} · ${startStr} – ${endStr}`;
+}
+
+// "2:30 PM – 3:00 PM"
+function formatTimeRange(startIso: string, endIso: string): string {
+  const fmt = (d: Date) =>
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${fmt(new Date(startIso))} – ${fmt(new Date(endIso))}`;
 }
 
 function StatusBadge({ status }: { status: Booking["status"] }) {
-  const map: Record<Booking["status"], { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    ACCEPTED: { label: "Accepted", variant: "default" },
-    PENDING: { label: "Pending", variant: "secondary" },
-    CANCELLED: { label: "Cancelled", variant: "destructive" },
-    RESCHEDULED: { label: "Rescheduled", variant: "outline" },
+  const map: Record<
+    Booking["status"],
+    { label: string; classes: string }
+  > = {
+    ACCEPTED: {
+      label: "Confirmed",
+      classes: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
+    PENDING: {
+      label: "Pending",
+      classes: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    },
+    CANCELLED: {
+      label: "Cancelled",
+      classes: "bg-red-50 text-red-600 border-red-200",
+    },
+    RESCHEDULED: {
+      label: "Rescheduled",
+      classes: "bg-blue-50 text-blue-600 border-blue-200",
+    },
   };
-  const { label, variant } = map[status] ?? map.PENDING;
-  return <Badge variant={variant}>{label}</Badge>;
+  const { label, classes } = map[status] ?? map.PENDING;
+  return (
+    <Badge variant="outline" className={cn("text-[11px] font-medium", classes)}>
+      {label}
+    </Badge>
+  );
 }
 
-// A single booking row
+// ── A single booking row (Cal.com layout) ────────────────────────────
+
 function BookingRow({
   booking,
   onCancel,
+  selected,
+  onSelect,
 }: {
   booking: Booking;
   onCancel: (booking: Booking) => void;
+  selected: boolean;
+  onSelect: (uid: string) => void;
 }) {
-  const canCancel = booking.status === "ACCEPTED" || booking.status === "PENDING";
+  const canCancel =
+    booking.status === "ACCEPTED" || booking.status === "PENDING";
 
   return (
-    <div className="flex items-start justify-between gap-4 bg-white border rounded-lg px-5 py-4 hover:border-gray-200 transition-colors">
-      <div className="flex-1 min-w-0 space-y-1.5">
-        {/* Title + status */}
+    <div
+      onClick={() => onSelect(booking.uid)}
+      className={cn(
+        "relative flex flex-col sm:flex-row gap-3 sm:gap-6 px-4 sm:px-6 py-4 transition-colors cursor-pointer",
+        "hover:bg-cal-bg-muted",
+        // Left accent bar on selected row
+        selected &&
+          "before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:bg-cal-brand before:rounded-r"
+      )}
+    >
+      {/* Date column — fixed width on desktop */}
+      <div className="sm:min-w-[140px] sm:max-w-[140px] flex-shrink-0">
+        <p className="text-sm font-medium text-cal-text-emphasis leading-6">
+          {formatDate(booking.startTime)}
+        </p>
+        <p className="text-sm text-cal-text-subtle">
+          {formatTimeRange(booking.startTime, booking.endTime)}
+        </p>
+      </div>
+
+      {/* Details */}
+      <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-medium text-gray-900 text-sm">{booking.title}</p>
+          <p className="text-sm font-medium text-cal-text-emphasis truncate">
+            {booking.title}
+          </p>
           <StatusBadge status={booking.status} />
         </div>
 
-        {/* Attendee */}
         {booking.attendee && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <User className="w-3 h-3" />
-            <span>{booking.attendee.name}</span>
-            <span className="text-gray-300">·</span>
-            <span>{booking.attendee.email}</span>
+          <div className="flex items-center gap-1.5 text-xs text-cal-text-subtle">
+            <User className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">
+              {booking.attendee.name} ({booking.attendee.email})
+            </span>
           </div>
         )}
 
-        {/* Time */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <Clock className="w-3 h-3" />
-          <span>{formatBookingTime(booking.startTime, booking.endTime)}</span>
-        </div>
-
-        {/* Event type */}
         {booking.eventType && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <Calendar className="w-3 h-3" />
-            <span>{booking.eventType.title}</span>
-            <span className="text-gray-200">·</span>
-            <span>{booking.eventType.length} min</span>
+          <div className="flex items-center gap-1.5 text-xs text-cal-text-muted">
+            <Clock className="w-3 h-3 flex-shrink-0" />
+            <span>
+              {booking.eventType.title} · {booking.eventType.length} min
+            </span>
           </div>
         )}
 
-        {/* Cancellation note */}
         {booking.cancellationNote && (
-          <p className="text-xs text-gray-400 italic mt-1">
+          <p className="text-xs text-cal-text-muted italic">
             Reason: {booking.cancellationNote}
           </p>
         )}
@@ -105,21 +141,23 @@ function BookingRow({
 
       {/* Actions */}
       {canCancel && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Reschedule — links to public reschedule page (M4) */}
-          <Button variant="outline" size="sm" className="gap-1.5" asChild>
+        <div className="flex items-center gap-2 flex-shrink-0 sm:self-center">
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" asChild>
             <Link href={`/reschedule/${booking.uid}`}>
-              <RefreshCcw className="w-3.5 h-3.5" />
+              <RefreshCcw className="w-3 h-3" />
               Reschedule
             </Link>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
-            onClick={() => onCancel(booking)}
+            className="gap-1.5 h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel(booking);
+            }}
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3 h-3" />
             Cancel
           </Button>
         </div>
@@ -128,11 +166,25 @@ function BookingRow({
   );
 }
 
+// ── Tabs component (styled like Cal.com) ─────────────────────────────
+
+type TabKey = "upcoming" | "past" | "cancelled";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "upcoming", label: "Upcoming" },
+  { key: "past", label: "Past" },
+  { key: "cancelled", label: "Cancelled" },
+];
+
+// ── Main page ────────────────────────────────────────────────────────
+
 export default function BookingsPage() {
   const [upcoming, setUpcoming] = useState<Booking[]>([]);
   const [past, setPast] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>("upcoming");
+  const [selectedUid, setSelectedUid] = useState<string | null>(null);
 
   // Cancel dialog state
   const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
@@ -146,12 +198,12 @@ export default function BookingsPage() {
   async function loadBookings() {
     try {
       setLoading(true);
-      const [up, past] = await Promise.all([
+      const [up, p] = await Promise.all([
         api.getUpcomingBookings(),
         api.getPastBookings(),
       ]);
       setUpcoming(up);
-      setPast(past);
+      setPast(p);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load bookings");
     } finally {
@@ -163,10 +215,10 @@ export default function BookingsPage() {
     if (!cancelTarget) return;
     setCancelling(true);
     try {
-      await api.cancelBooking(cancelTarget.id, { reason: cancelReason || undefined });
-      // Move from upcoming to past with CANCELLED status
-      setUpcoming((prev) => prev.filter((b) => b.uid !== cancelTarget.uid));
-      await loadBookings(); // refresh both lists
+      await api.cancelBooking(cancelTarget.id, {
+        reason: cancelReason || undefined,
+      });
+      await loadBookings();
       setCancelTarget(null);
       setCancelReason("");
     } catch (e: unknown) {
@@ -176,12 +228,27 @@ export default function BookingsPage() {
     }
   }
 
+  // Derive cancelled bookings from the past list
+  const cancelled = past.filter((b) => b.status === "CANCELLED");
+  const pastNonCancelled = past.filter((b) => b.status !== "CANCELLED");
+
+  const listMap: Record<TabKey, Booking[]> = {
+    upcoming,
+    past: pastNonCancelled,
+    cancelled,
+  };
+  const currentList = listMap[activeTab];
+
+  // ── Loading skeleton ──────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-4">
+      <div className="p-6 md:p-8 max-w-4xl">
+        <div className="animate-pulse space-y-0 border border-cal-border-subtle rounded-md overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-gray-100 rounded-lg" />
+            <div
+              key={i}
+              className="h-[88px] bg-cal-bg-subtle border-b border-cal-border-subtle last:border-0"
+            />
           ))}
         </div>
       </div>
@@ -190,66 +257,85 @@ export default function BookingsPage() {
 
   if (error) {
     return (
-      <div className="p-8">
-        <p className="text-red-500">{error}</p>
-        <Button className="mt-4" onClick={loadBookings}>Retry</Button>
+      <div className="p-6 md:p-8">
+        <p className="text-destructive text-sm">{error}</p>
+        <Button className="mt-4" onClick={loadBookings}>
+          Retry
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage your upcoming and past bookings.
+    <div className="p-6 md:p-8 max-w-4xl">
+      {/* ── Page header ────────────────────────────────────────── */}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-cal-text-emphasis">
+          Bookings
+        </h1>
+        <p className="text-sm text-cal-text-subtle mt-0.5">
+          See upcoming and past events booked through your event type links.
         </p>
       </div>
 
-      <Tabs defaultValue="upcoming">
-        <TabsList className="mb-6">
-          <TabsTrigger value="upcoming">
-            Upcoming{upcoming.length > 0 && (
-              <span className="ml-1.5 bg-gray-200 text-gray-700 rounded-full text-xs px-1.5 py-0.5">
-                {upcoming.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-        </TabsList>
+      {/* ── Tab bar (Cal.com style — simple underline tabs) ────── */}
+      <div className="flex items-center gap-4 border-b border-cal-border-subtle mb-6">
+        {TABS.map((tab) => {
+          const count =
+            tab.key === "upcoming"
+              ? upcoming.length
+              : tab.key === "past"
+              ? pastNonCancelled.length
+              : cancelled.length;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "pb-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+                activeTab === tab.key
+                  ? "border-cal-brand text-cal-text-emphasis"
+                  : "border-transparent text-cal-text-subtle hover:text-cal-text-emphasis hover:border-cal-border-subtle"
+              )}
+            >
+              {tab.label}
+              {count > 0 && (
+                <span className="ml-1.5 bg-cal-bg-emphasis text-cal-text-subtle rounded-full text-xs px-1.5 py-0.5">
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="upcoming">
-          {upcoming.length === 0 ? (
-            <div className="text-center py-16 border rounded-lg bg-white">
-              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No upcoming bookings.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {upcoming.map((b) => (
-                <BookingRow key={b.uid} booking={b} onCancel={setCancelTarget} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+      {/* ── Booking list ───────────────────────────────────────── */}
+      {currentList.length === 0 ? (
+        <div className="text-center py-16 border border-cal-border-subtle rounded-md bg-cal-bg">
+          <Calendar className="w-10 h-10 text-cal-text-muted mx-auto mb-3" />
+          <p className="text-cal-text-subtle text-sm">
+            {activeTab === "upcoming"
+              ? "No upcoming bookings."
+              : activeTab === "past"
+              ? "No past bookings."
+              : "No cancelled bookings."}
+          </p>
+        </div>
+      ) : (
+        <div className="border border-cal-border-subtle rounded-md overflow-hidden bg-cal-bg divide-y divide-cal-border-subtle">
+          {currentList.map((b) => (
+            <BookingRow
+              key={b.uid}
+              booking={b}
+              onCancel={setCancelTarget}
+              selected={selectedUid === b.uid}
+              onSelect={setSelectedUid}
+            />
+          ))}
+        </div>
+      )}
 
-        <TabsContent value="past">
-          {past.length === 0 ? (
-            <div className="text-center py-16 border rounded-lg bg-white">
-              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No past bookings.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {past.map((b) => (
-                <BookingRow key={b.uid} booking={b} onCancel={setCancelTarget} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Cancel confirmation dialog */}
+      {/* ── Cancel confirmation dialog ─────────────────────────── */}
       <Dialog
         open={!!cancelTarget}
         onOpenChange={(open) => {
@@ -263,7 +349,8 @@ export default function BookingsPage() {
           <DialogHeader>
             <DialogTitle>Cancel booking</DialogTitle>
             <DialogDescription>
-              Cancel &ldquo;{cancelTarget?.title}&rdquo;? This will notify the attendee via email.
+              Cancel &ldquo;{cancelTarget?.title}&rdquo;? This will notify the
+              attendee via email.
             </DialogDescription>
           </DialogHeader>
 
@@ -271,7 +358,7 @@ export default function BookingsPage() {
             <Label htmlFor="cancel-reason">Reason (optional)</Label>
             <Textarea
               id="cancel-reason"
-              placeholder="Let the attendee know why you're cancelling…"
+              placeholder="Let the attendee know why you're cancelling..."
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               rows={3}
@@ -293,7 +380,7 @@ export default function BookingsPage() {
               disabled={cancelling}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {cancelling ? "Cancelling…" : "Confirm cancel"}
+              {cancelling ? "Cancelling..." : "Confirm cancel"}
             </Button>
           </DialogFooter>
         </DialogContent>
