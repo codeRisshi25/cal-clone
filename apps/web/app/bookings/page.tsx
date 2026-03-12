@@ -163,7 +163,7 @@ export default function BookingsPage() {
     if (!cancelTarget) return;
     setCancelling(true);
     try {
-      await api.cancelBooking(cancelTarget.uid, { reason: cancelReason || undefined });
+      await api.cancelBooking(cancelTarget.id, { reason: cancelReason || undefined });
       // Move from upcoming to past with CANCELLED status
       setUpcoming((prev) => prev.filter((b) => b.uid !== cancelTarget.uid));
       await loadBookings(); // refresh both lists

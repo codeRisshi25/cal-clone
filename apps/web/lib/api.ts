@@ -29,69 +29,71 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// ── Event Types ────────────────────────────────────────────────────────────────
+// ── Event Types  (mounted at /api/admin/event-types) ──────────────────────────
 
 export function getEventTypes(): Promise<EventType[]> {
-  return request("/event-types");
+  return request("/api/admin/event-types");
 }
 
 export function createEventType(body: CreateEventTypeBody): Promise<EventType> {
-  return request("/event-types", { method: "POST", body: JSON.stringify(body) });
+  return request("/api/admin/event-types", { method: "POST", body: JSON.stringify(body) });
 }
 
 export function updateEventType(id: string, body: UpdateEventTypeBody): Promise<EventType> {
-  return request(`/event-types/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+  return request(`/api/admin/event-types/${id}`, { method: "PATCH", body: JSON.stringify(body) });
 }
 
 export function deleteEventType(id: string): Promise<void> {
-  return request(`/event-types/${id}`, { method: "DELETE" });
+  return request(`/api/admin/event-types/${id}`, { method: "DELETE" });
 }
 
-// ── Availability ───────────────────────────────────────────────────────────────
+// ── Availability  (mounted at /api/admin/availability) ────────────────────────
 
 export function getSchedules(): Promise<Schedule[]> {
-  return request("/availability");
+  return request("/api/admin/availability");
 }
 
 export function updateAvailability(body: AvailabilityUpdateBody): Promise<Schedule> {
-  return request("/availability", { method: "PUT", body: JSON.stringify(body) });
+  return request("/api/admin/availability", { method: "PUT", body: JSON.stringify(body) });
 }
 
 export function addDateOverride(body: DateOverrideBody): Promise<Availability> {
-  return request("/availability/override", { method: "POST", body: JSON.stringify(body) });
+  return request("/api/admin/availability/overrides", { method: "POST", body: JSON.stringify(body) });
 }
 
 export function deleteDateOverride(id: string): Promise<void> {
-  return request(`/availability/override/${id}`, { method: "DELETE" });
+  return request(`/api/admin/availability/overrides/${id}`, { method: "DELETE" });
 }
 
-// ── Bookings ───────────────────────────────────────────────────────────────────
+// ── Bookings  (mounted at /api/admin/bookings) ────────────────────────────────
+// GET / accepts ?status=upcoming|past
 
 export function getUpcomingBookings(): Promise<Booking[]> {
-  return request("/bookings/upcoming");
+  return request("/api/admin/bookings?status=upcoming");
 }
 
 export function getPastBookings(): Promise<Booking[]> {
-  return request("/bookings/past");
+  return request("/api/admin/bookings?status=past");
 }
 
-export function cancelBooking(uid: string, body: CancelBookingBody): Promise<Booking> {
-  return request(`/bookings/${uid}/cancel`, { method: "POST", body: JSON.stringify(body) });
+// Cancel/reschedule use the booking's database id (not uid) — matches /:id routes
+export function cancelBooking(id: string, body: CancelBookingBody): Promise<Booking> {
+  return request(`/api/admin/bookings/${id}/cancel`, { method: "POST", body: JSON.stringify(body) });
 }
 
-export function rescheduleBooking(uid: string, body: RescheduleBookingBody): Promise<Booking> {
-  return request(`/bookings/${uid}/reschedule`, { method: "POST", body: JSON.stringify(body) });
+export function rescheduleBooking(id: string, body: RescheduleBookingBody): Promise<Booking> {
+  return request(`/api/admin/bookings/${id}/reschedule`, { method: "POST", body: JSON.stringify(body) });
 }
 
-// ── Public ─────────────────────────────────────────────────────────────────────
+// ── Public  (mounted at /api/public) ──────────────────────────────────────────
 
 export function getPublicProfile(username: string): Promise<PublicProfile> {
-  return request(`/${username}`);
+  return request(`/api/public/${username}`);
 }
 
-export function getSlots(eventTypeId: string, date: string, timezone: string): Promise<TimeSlot[]> {
+export function getSlots(username: string, slug: string, date: string, timezone: string): Promise<TimeSlot[]> {
   const params = new URLSearchParams({ date, timezone });
-  return request(`/slots/${eventTypeId}?${params}`);
+  return request(`/api/public/${username}/${slug}/slots?${params}`);
 }
 
 export function createBooking(
@@ -99,9 +101,9 @@ export function createBooking(
   slug: string,
   body: CreateBookingBody
 ): Promise<Booking> {
-  return request(`/${username}/${slug}/book`, { method: "POST", body: JSON.stringify(body) });
+  return request(`/api/public/${username}/${slug}/book`, { method: "POST", body: JSON.stringify(body) });
 }
 
 export function getBookingByUid(uid: string): Promise<Booking> {
-  return request(`/bookings/${uid}`);
+  return request(`/api/public/bookings/${uid}`);
 }
