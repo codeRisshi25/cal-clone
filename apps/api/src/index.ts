@@ -30,9 +30,12 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: err.message || "Internal server error" });
 });
 
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`API server running on port ${PORT}`);
-});
-
 export default app;
+
+// Only start listening when this file is run directly (not when imported by tests)
+if (require.main === module) {
+  const PORT = process.env.PORT || 8000;
+  app.listen(PORT, () => {
+    console.log(`API server running on port ${PORT}`);
+  });
+}
