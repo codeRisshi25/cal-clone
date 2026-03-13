@@ -111,6 +111,7 @@ export interface AvailabilityUpdateBody {
 }
 
 export interface DateOverrideBody {
+  scheduleId: string;
   date: string; // YYYY-MM-DD
   isBlocked: boolean;
   startTime?: string; // HH:MM — required if not blocked

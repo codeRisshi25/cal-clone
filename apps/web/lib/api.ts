@@ -49,8 +49,9 @@ export function deleteEventType(id: string): Promise<void> {
 
 // ── Availability  (mounted at /api/admin/availability) ────────────────────────
 
-export function getSchedules(): Promise<Schedule[]> {
-  return request("/api/admin/availability");
+export async function getSchedules(): Promise<Schedule[]> {
+  const data = await request<{ schedules: Schedule[]; defaultScheduleId: string | null }>("/api/admin/availability");
+  return data.schedules;
 }
 
 export function updateAvailability(body: AvailabilityUpdateBody): Promise<Schedule> {

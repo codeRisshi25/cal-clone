@@ -208,7 +208,7 @@ export default function AvailabilityPage() {
 
   // Date override modal
   const [overrideOpen, setOverrideOpen] = useState(false);
-  const [overrideForm, setOverrideForm] = useState<DateOverrideBody>({
+  const [overrideForm, setOverrideForm] = useState<Omit<DateOverrideBody, "scheduleId">>({
     date: "",
     isBlocked: true,
     startTime: "09:00",
@@ -298,9 +298,10 @@ export default function AvailabilityPage() {
   }
 
   async function handleAddOverride() {
+    if (!schedule) return;
     setSavingOverride(true);
     try {
-      await api.addDateOverride(overrideForm);
+      await api.addDateOverride({ ...overrideForm, scheduleId: schedule.id });
       await loadSchedules();
       setOverrideOpen(false);
       setOverrideForm({
