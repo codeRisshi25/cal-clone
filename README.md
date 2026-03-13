@@ -2,7 +2,7 @@
 
 A full-stack scheduling/booking web application that replicates Cal.com's design and user experience. Users can create event types, configure availability, and let others book time slots through a public booking page.
 
-**Live Demo:** _Coming soon (frontend deployed on Vercel, backend on Azure ACR)_
+**Live Demo:** [cal-clone-olive.vercel.app](https://cal-clone-olive.vercel.app) _(Frontend only — backend deployment on Azure ACR pending)_
 
 **GitHub:** [github.com/codeRisshi25/cal-clone](https://github.com/codeRisshi25/cal-clone)
 
