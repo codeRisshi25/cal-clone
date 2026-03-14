@@ -1,6 +1,9 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend throws if API key is missing — make it optional so the app still boots
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 const FROM = "Cal Clone <noreply@calclone.dev>";
 
@@ -24,6 +27,11 @@ export async function sendBookingConfirmation(opts: {
   });
 
   const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${bookingUid}/cancel`;
+
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not set — skipping booking confirmation email");
+    return;
+  }
 
   await resend.emails.send({
     from: FROM,
@@ -66,6 +74,11 @@ export async function sendRescheduleEmail(opts: {
 
   const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${newBookingUid}`;
 
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not set — skipping reschedule email");
+    return;
+  }
+
   await resend.emails.send({
     from: FROM,
     to: attendeeEmail,
@@ -99,6 +112,11 @@ export async function sendCancellationEmail(opts: {
     dateStyle: "full",
     timeStyle: "short",
   });
+
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not set — skipping cancellation email");
+    return;
+  }
 
   await resend.emails.send({
     from: FROM,

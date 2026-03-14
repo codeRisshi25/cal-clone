@@ -1,0 +1,77 @@
+apiVersion: 2021-09-01
+location: centralindia
+name: calclone-group
+properties:
+  osType: Linux
+  restartPolicy: Always
+  ipAddress:
+    type: Public
+    dnsNameLabel: calclone-api
+    ports:
+      - protocol: TCP
+        port: 8000
+  imageRegistryCredentials:
+    - server: calcloneacr25.azurecr.io
+      username: calcloneacr25
+      password: ${ACR_PASSWORD}  # Set via environment variable, do not commit real credentials
+  containers:
+    # ── PostgreSQL ──────────────────────────────────────────────────────────
+    - name: postgres
+      properties:
+        image: postgres:16-alpine
+        resources:
+          requests:
+            cpu: 0.5
+            memoryInGB: 0.5
+        environmentVariables:
+          - name: POSTGRES_USER
+            value: calclone
+          - name: POSTGRES_PASSWORD
+            secureValue: ${POSTGRES_PASSWORD}  # Set via environment variable
+          - name: POSTGRES_DB
+            value: calclone_prod
+        ports:
+          - port: 5432
+            protocol: TCP
+
+    # ── Redis ───────────────────────────────────────────────────────────────
+    - name: redis
+      properties:
+        image: redis:7-alpine
+        resources:
+          requests:
+            cpu: 0.5
+            memoryInGB: 0.5
+        ports:
+          - port: 6379
+            protocol: TCP
+        command:
+          - redis-server
+          - --maxmemory
+          - 128mb
+          - --maxmemory-policy
+          - allkeys-lru
+
+    # ── API ─────────────────────────────────────────────────────────────────
+    - name: api
+      properties:
+        image: calcloneacr25.azurecr.io/cal-clone-api:latest
+        resources:
+          requests:
+            cpu: 0.5
+            memoryInGB: 0.5
+        ports:
+          - port: 8000
+            protocol: TCP
+        environmentVariables:
+          - name: PORT
+            value: "8000"
+          - name: NODE_ENV
+            value: production
+          - name: DATABASE_URL
+            secureValue: postgresql://calclone:${POSTGRES_PASSWORD}@localhost:5432/calclone_prod
+          - name: REDIS_URL
+            value: redis://localhost:6379
+          - name: RESEND_API_KEY
+            value: RESEND_API_KEY_PLACEHOLDER
+type: Microsoft.ContainerInstance/containerGroups

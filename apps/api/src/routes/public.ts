@@ -154,7 +154,7 @@ router.get("/:username/:slug/slots", async (req: Request, res: Response) => {
     const slotEnd = new Date(slotStart.getTime() + eventType.length * 60 * 1000);
     // A slot is taken if any existing booking overlaps with it
     return !existingBookings.some(
-      (b) => b.startTime < slotEnd && b.endTime > slotStart
+      (b: { startTime: Date; endTime: Date }) => b.startTime < slotEnd && b.endTime > slotStart
     );
   });
 

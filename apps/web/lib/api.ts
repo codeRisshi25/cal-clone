@@ -15,7 +15,12 @@ import type {
   User,
 } from "@cal-clone/types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// In production, use relative URLs so requests go through Next.js rewrites (avoids mixed content).
+// In development, hit the local Express API directly.
+const BASE =
+  process.env.NODE_ENV === "production"
+    ? ""
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
