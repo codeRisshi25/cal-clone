@@ -3,54 +3,52 @@
 @tailwind utilities;
 
 /*
- * Cal.com-inspired semantic design tokens.
- * We keep the standard shadcn/ui variables AND add Cal-specific ones
- * so that shadcn primitives (Dialog, Button, etc.) keep working while
- * our page-level components use the Cal palette.
+ * Cal.com dark theme design tokens.
+ * Dark mode is the default — matches Cal.com's actual UI.
  */
 @layer base {
   :root {
-    /* ── shadcn/ui standard tokens ────────────────────────────── */
-    --background: 0 0% 100%;
-    --foreground: 210 30% 4%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 221 39% 11%;
-    --primary: 221 39% 11%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 20% 97%;
-    --secondary-foreground: 221 39% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --muted: 210 20% 97%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 210 20% 97%;
-    --accent-foreground: 221 39% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 210 30% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 210 30% 4%;
-    --radius: 0.25rem; /* Cal.com uses 4px, not shadcn's default 8px */
+    /* ── shadcn/ui standard tokens (dark) ─────────────────────── */
+    --background: 0 0% 9%;
+    --foreground: 0 0% 95%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 40%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --destructive: 0 63% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+    --radius: 0.375rem;
 
-    /* ── Cal.com semantic backgrounds ─────────────────────────── */
-    --cal-bg: 0 0% 100%;              /* white — main content */
-    --cal-bg-subtle: 220 14% 96%;     /* #F3F4F6 — hover rows */
-    --cal-bg-muted: 210 20% 97%;      /* #F5F7FA — sidebar bg */
-    --cal-bg-emphasis: 220 13% 91%;   /* #E5E7EB — active/selected */
+    /* ── Cal.com semantic backgrounds (dark) ──────────────────── */
+    --cal-bg: 0 0% 9%;               /* #171717 — main content */
+    --cal-bg-subtle: 0 0% 13%;       /* #212121 — hover rows */
+    --cal-bg-muted: 0 0% 7%;         /* #121212 — sidebar bg */
+    --cal-bg-emphasis: 0 0% 18%;     /* #2e2e2e — active/selected */
 
-    /* ── Cal.com semantic text ────────────────────────────────── */
-    --cal-text-emphasis: 210 30% 4%;  /* near-black — headings */
-    --cal-text: 220 6% 25%;          /* #3B3F44 — body */
-    --cal-text-subtle: 220 9% 46%;   /* #6B7280 — secondary */
-    --cal-text-muted: 218 11% 65%;   /* #9CA3AF — tertiary */
+    /* ── Cal.com semantic text (dark) ─────────────────────────── */
+    --cal-text-emphasis: 0 0% 95%;   /* #f2f2f2 — headings */
+    --cal-text: 0 0% 78%;            /* #c7c7c7 — body */
+    --cal-text-subtle: 0 0% 55%;     /* #8c8c8c — secondary */
+    --cal-text-muted: 0 0% 40%;      /* #666666 — tertiary */
 
-    /* ── Cal.com semantic borders ─────────────────────────────── */
-    --cal-border-subtle: 220 13% 91%; /* #E5E7EB */
-    --cal-border-muted: 220 14% 96%;  /* #ECEEF1 — sidebar border */
+    /* ── Cal.com semantic borders (dark) ──────────────────────── */
+    --cal-border-subtle: 0 0% 18%;   /* #2e2e2e */
+    --cal-border-muted: 0 0% 14%;    /* #242424 — sidebar border */
 
     /* ── Cal.com brand ────────────────────────────────────────── */
-    --cal-brand: 221 39% 11%;        /* #111827 — CTA buttons */
-    --cal-brand-text: 210 40% 98%;   /* white text on brand */
+    --cal-brand: 0 0% 100%;          /* white — CTA buttons */
+    --cal-brand-text: 0 0% 9%;       /* dark text on brand */
   }
 }
 

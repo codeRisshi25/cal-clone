@@ -9,10 +9,9 @@ export const metadata: Metadata = {
   description: "A Cal.com clone scheduling app",
 };
 
-// Root layout — just the HTML shell. Route groups handle their own chrome.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={`${inter.className} antialiased bg-cal-bg`}>
         {children}
       </body>

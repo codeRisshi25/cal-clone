@@ -152,7 +152,7 @@ export default function BookingConfirmationPage() {
 
         {/* Cancellation note */}
         {isCancelled && booking.cancellationNote && (
-          <div className="mt-4 p-3 bg-destructive/5 rounded-md text-left">
+          <div className="mt-4 p-3 bg-destructive/10 rounded-md text-left">
             <p className="text-xs text-cal-text-subtle">
               <strong>Reason:</strong> {booking.cancellationNote}
             </p>

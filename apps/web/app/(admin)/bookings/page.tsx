@@ -45,19 +45,19 @@ function StatusBadge({ status }: { status: Booking["status"] }) {
   > = {
     ACCEPTED: {
       label: "Confirmed",
-      classes: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      classes: "bg-emerald-900/30 text-emerald-400 border-emerald-800/50",
     },
     PENDING: {
       label: "Pending",
-      classes: "bg-yellow-50 text-yellow-700 border-yellow-200",
+      classes: "bg-yellow-900/30 text-yellow-400 border-yellow-800/50",
     },
     CANCELLED: {
       label: "Cancelled",
-      classes: "bg-red-50 text-red-600 border-red-200",
+      classes: "bg-red-900/30 text-red-400 border-red-800/50",
     },
     RESCHEDULED: {
       label: "Rescheduled",
-      classes: "bg-blue-50 text-blue-600 border-blue-200",
+      classes: "bg-blue-900/30 text-blue-400 border-blue-800/50",
     },
   };
   const { label, classes } = map[status] ?? map.PENDING;
@@ -151,7 +151,7 @@ function BookingRow({
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+            className="gap-1.5 h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
               onCancel(booking);
