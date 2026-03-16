@@ -24,6 +24,10 @@ frontend runs on `localhost:3000`, api on `localhost:8000`
 
 
 
+https://github.com/user-attachments/assets/daddf1a9-7575-4cb8-9b1c-a6d42ebdffe9
+
+
+
 ## stack
 
 - frontend is next.js 14 (app router) with tailwind and radix ui
