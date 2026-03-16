@@ -5,6 +5,7 @@ import eventTypesRouter from "./routes/eventTypes";
 import availabilityRouter from "./routes/availability";
 import bookingsRouter from "./routes/bookings";
 import publicRouter from "./routes/public";
+import resetRouter from "./routes/reset";
 
 const app: Application = express();
 
@@ -23,6 +24,9 @@ app.use("/api/admin/bookings", bookingsRouter);
 
 // Public routes — for the booking page
 app.use("/api/public", publicRouter);
+
+// Reset route — wipe and re-seed database
+app.use("/api/admin/reset", resetRouter);
 
 // Generic error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

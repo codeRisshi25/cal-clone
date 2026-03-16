@@ -18,7 +18,8 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { resetDatabase } from "@/lib/api";
 
 const mainNav = [
   { href: "/event-types", label: "Event types", icon: Link2 },
@@ -40,6 +41,34 @@ const bottomLinks = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const clickCount = useRef(0);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleVersionClick() {
+    clickCount.current += 1;
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    if (clickCount.current >= 3) {
+      clickCount.current = 0;
+      triggerReset();
+    } else {
+      clickTimer.current = setTimeout(() => { clickCount.current = 0; }, 600);
+    }
+  }
+
+  async function triggerReset() {
+    if (resetting) return;
+    if (!confirm("Reset database to seed state?")) return;
+    setResetting(true);
+    try {
+      await resetDatabase();
+      window.location.reload();
+    } catch {
+      alert("Reset failed");
+    } finally {
+      setResetting(false);
+    }
+  }
 
   function copyPublicLink() {
     const url = `${window.location.origin}/risshi`;
@@ -130,8 +159,11 @@ export default function Sidebar() {
             );
           })}
 
-          <p className="text-[10px] text-cal-text-muted px-2 pt-2">
-            Cal Clone v1.0.0
+          <p
+            className="text-[10px] text-cal-text-muted px-2 pt-2 select-none cursor-default"
+            onClick={handleVersionClick}
+          >
+            {resetting ? "Resetting..." : "Cal Clone v1.0.0"}
           </p>
         </div>
       </aside>

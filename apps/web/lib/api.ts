@@ -137,3 +137,9 @@ export function getBookingByUid(uid: string): Promise<Booking> {
 export function cancelBookingByUid(uid: string, body: CancelBookingBody): Promise<Booking> {
   return request(`/api/public/bookings/${uid}/cancel`, { method: "POST", body: JSON.stringify(body) });
 }
+
+// ── Reset (hidden) ────────────────────────────────────────────────────────────
+
+export function resetDatabase(): Promise<{ ok: boolean; message: string }> {
+  return request("/api/admin/reset", { method: "POST" });
+}
