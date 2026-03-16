@@ -281,7 +281,7 @@ export default function EventTypesPage() {
 
       {/* ── Event types list ─────────────────────────────────────── */}
       {filtered.length > 0 && (
-        <div className="border border-cal-border-subtle rounded-md overflow-hidden bg-cal-bg divide-y divide-cal-border-subtle">
+        <div className="border border-cal-border-subtle rounded-md bg-cal-bg divide-y divide-cal-border-subtle">
           {filtered.map((et) => (
             <div
               key={et.id}
@@ -363,7 +363,7 @@ export default function EventTypesPage() {
 
                   {menuOpenId === et.id && (
                     <div
-                      className="absolute right-0 top-full mt-1 w-36 rounded-md border border-cal-border-subtle bg-cal-bg-subtle shadow-lg z-20 py-1"
+                      className="absolute right-0 top-full mt-1 w-36 rounded-md border border-cal-border-subtle bg-cal-bg-subtle shadow-lg z-50 py-1"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button

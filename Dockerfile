@@ -33,6 +33,16 @@ RUN node -e "const f='packages/types/package.json';const p=require('./'+f);p.mai
 # Build the API (tsc -> dist/)
 RUN pnpm --filter @cal-clone/api build
 
+# Compile seed script to JS separately (so it runs with plain node in production)
+RUN cd apps/api && node -e "\
+const ts = require('typescript');\
+const fs = require('fs');\
+const src = fs.readFileSync('src/seed.ts','utf8');\
+const out = ts.transpileModule(src, {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,esModuleInterop:true}});\
+fs.mkdirSync('dist-seed',{recursive:true});\
+fs.writeFileSync('dist-seed/seed.js',out.outputText);\
+"
+
 # ── Production image ──────────────────────────────────────────────────────────
 FROM base AS runner
 ENV NODE_ENV=production
@@ -54,12 +64,15 @@ COPY --from=build /app/packages/db ./packages/db
 # Copy packages/types
 COPY --from=build /app/packages/types ./packages/types
 
-# Copy seed script source + ts-node for seeding (needed for initial setup)
-COPY --from=build /app/apps/api/src/seed.ts ./apps/api/src/seed.ts
+# Copy seed script (compiled JS) + tsconfigs for prisma
+COPY --from=build /app/apps/api/dist-seed/seed.js ./apps/api/dist-seed/seed.js
 COPY --from=build /app/tsconfig.json ./tsconfig.json
 COPY --from=build /app/apps/api/tsconfig.json ./apps/api/tsconfig.json
 
+# Entrypoint: db push + conditional seed + start server
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 EXPOSE 8000
 
-# Start the API
-CMD ["node", "apps/api/dist/index.js"]
+ENTRYPOINT ["./entrypoint.sh"]

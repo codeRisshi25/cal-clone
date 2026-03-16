@@ -105,6 +105,17 @@ router.delete("/:id", async (req: Request, res: Response) => {
   const existing = await prisma.eventType.findUnique({ where: { id: req.params.id } });
   if (!existing) return res.status(404).json({ error: "Event type not found" });
 
+  // Delete associated bookings (and their attendees) first to avoid FK constraint
+  const bookings = await prisma.booking.findMany({
+    where: { eventTypeId: req.params.id },
+    select: { id: true },
+  });
+  if (bookings.length > 0) {
+    const bookingIds = bookings.map((b) => b.id);
+    await prisma.attendee.deleteMany({ where: { bookingId: { in: bookingIds } } });
+    await prisma.booking.deleteMany({ where: { eventTypeId: req.params.id } });
+  }
+
   await prisma.eventType.delete({ where: { id: req.params.id } });
   await cacheDel("event-types:admin");
   return res.status(204).send();
