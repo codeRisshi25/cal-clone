@@ -96,5 +96,4 @@ jobs:
         run: |
           az container create \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --file deploy/aci-group-final.yaml \
-            --output table
+            --file deploy/aci-group-final.yaml
