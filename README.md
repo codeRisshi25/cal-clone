@@ -40,10 +40,7 @@ https://github.com/user-attachments/assets/daddf1a9-7575-4cb8-9b1c-a6d42ebdffe9
 
 can be found in `packages/db/prisma/schema.prisma`
 
-```
-User ──┬── EventType ──── Booking ──── Attendee
-       └── Schedule ───── Availability
-```
+<img width="3810" height="2350" alt="image" src="https://github.com/user-attachments/assets/2275b1bd-7f80-4255-b3fc-9a0b919ba70b" />
 
 - **User** — the person who owns the calendar (username, email, timezone)
 - **EventType** — meeting types (title, slug, duration, color). unique slug per user
