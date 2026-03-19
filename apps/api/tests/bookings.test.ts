@@ -21,6 +21,7 @@ jest.mock("../src/lib/redis", () => ({
 jest.mock("../src/lib/email", () => ({
   sendBookingConfirmation: jest.fn().mockResolvedValue(undefined),
   sendCancellationEmail: jest.fn().mockResolvedValue(undefined),
+  sendRescheduleEmail: jest.fn().mockResolvedValue(undefined),
 }));
 
 // ---- helpers ----
