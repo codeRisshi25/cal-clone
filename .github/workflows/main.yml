@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Tests
+        run: pnpm test
+
+      - name: Deploy to Azure (Main Branch Only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Replace Secrets in Deployment Template
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Use envsubst to safely inject secrets into the YAML file
+          export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
+          export ACR_PASSWORD="${{ secrets.ACR_PASSWORD }}"
+          export RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}"
+          
+          # We're writing to deploy-final.yaml which will be ignored by git
+          envsubst < deploy/aci-group.yaml > deploy/aci-group-final.yaml
+
+      - name: Deploy Azure Container Group
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          az container create \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --file deploy/aci-group-final.yaml \
+            --output table

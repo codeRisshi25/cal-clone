@@ -5,7 +5,43 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM = "Cal Clone <noreply@calclone.dev>";
+const FROM = "Cal Clone <onboarding@resend.dev>";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://cal-clone-olive.vercel.app";
+
+// --- Shared HTML Wrapper ---
+const EmailWrapper = (content: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; }
+    .header { padding: 24px; text-align: center; border-bottom: 1px solid #e5e7eb; background-color: #fafafa; }
+    .header h1 { margin: 0; font-size: 20px; color: #111827; font-weight: 600; }
+    .content { padding: 32px 24px; color: #374151; font-size: 16px; line-height: 1.5; }
+    .footer { padding: 24px; text-align: center; color: #6b7280; font-size: 14px; background-color: #fafafa; border-top: 1px solid #e5e7eb; }
+    .btn { display: inline-block; padding: 12px 24px; background-color: #111827; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 500; margin-top: 16px; margin-bottom: 16px; }
+    .details { background-color: #f9fafb; border-radius: 6px; padding: 16px; margin: 24px 0; border: 1px solid #e5e7eb; }
+    .details p { margin: 8px 0; }
+    .strong { color: #111827; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Cal Clone</h1>
+    </div>
+    <div class="content">
+      ${content}
+    </div>
+    <div class="footer">
+      Powered by Scaler AI Labs • <a href="${APP_URL}" style="color:#6b7280;">${APP_URL.replace('https://', '')}</a>
+    </div>
+  </div>
+</body>
+</html>
+`;
 
 // Send confirmation email to the attendee after booking
 export async function sendBookingConfirmation(opts: {
@@ -26,25 +62,36 @@ export async function sendBookingConfirmation(opts: {
     timeStyle: "short",
   });
 
-  const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${bookingUid}/cancel`;
+  const cancelUrl = `${APP_URL}/booking/${bookingUid}/cancel`;
+  const rescheduleUrl = `${APP_URL}/reschedule/${bookingUid}`;
 
   if (!resend) {
     console.warn("[email] RESEND_API_KEY not set — skipping booking confirmation email");
     return;
   }
 
+  const content = `
+    <h2 style="color: #111827; margin-top: 0;">Meeting Confirmed</h2>
+    <p>Hi ${attendeeName},</p>
+    <p>Your meeting has been successfully scheduled with <span class="strong">${hostName}</span>.</p>
+    
+    <div class="details">
+      <p><span class="strong">What:</span> ${eventTitle}</p>
+      <p><span class="strong">When:</span> ${formatted} (${timezone})</p>
+    </div>
+
+    <p style="text-align: center;">
+      <a href="${rescheduleUrl}" class="btn">Reschedule or Cancel</a>
+    </p>
+    
+    <p style="font-size: 14px; color: #6b7280; margin-top: 32px;">Need immediate help? You can reply directly to this email.</p>
+  `;
+
   await resend.emails.send({
     from: FROM,
     to: attendeeEmail,
     subject: `Confirmed: ${eventTitle} with ${hostName}`,
-    html: `
-      <h2>Your meeting is confirmed!</h2>
-      <p>Hi ${attendeeName},</p>
-      <p>Your <strong>${eventTitle}</strong> with <strong>${hostName}</strong> is scheduled for:</p>
-      <p><strong>${formatted} (${timezone})</strong></p>
-      <br/>
-      <p>Need to cancel? <a href="${cancelUrl}">Click here</a></p>
-    `,
+    html: EmailWrapper(content),
   });
 }
 
@@ -72,26 +119,33 @@ export async function sendRescheduleEmail(opts: {
     timeStyle: "short",
   });
 
-  const bookingUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${newBookingUid}`;
+  const bookingUrl = `${APP_URL}/booking/${newBookingUid}`;
 
   if (!resend) {
     console.warn("[email] RESEND_API_KEY not set — skipping reschedule email");
     return;
   }
 
+  const content = `
+    <h2 style="color: #111827; margin-top: 0;">Meeting Rescheduled</h2>
+    <p>Hi ${attendeeName},</p>
+    <p>Your meeting with <span class="strong">${hostName}</span> has been successfully rescheduled to a new time.</p>
+    
+    <div class="details">
+      <p><span style="color:#ef4444;text-decoration:line-through;">Previous: ${oldFormatted}</span></p>
+      <p><span class="strong" style="color:#10b981;">New Time: ${newFormatted} (${timezone})</span></p>
+    </div>
+
+    <p style="text-align: center;">
+      <a href="${bookingUrl}" class="btn">View Booking Details</a>
+    </p>
+  `;
+
   await resend.emails.send({
     from: FROM,
     to: attendeeEmail,
     subject: `Rescheduled: ${eventTitle} with ${hostName}`,
-    html: `
-      <h2>Your meeting has been rescheduled</h2>
-      <p>Hi ${attendeeName},</p>
-      <p>Your <strong>${eventTitle}</strong> with <strong>${hostName}</strong> has been rescheduled.</p>
-      <p><s>${oldFormatted} (${timezone})</s></p>
-      <p><strong>New time: ${newFormatted} (${timezone})</strong></p>
-      <br/>
-      <p><a href="${bookingUrl}">View booking details</a></p>
-    `,
+    html: EmailWrapper(content),
   });
 }
 
@@ -118,15 +172,22 @@ export async function sendCancellationEmail(opts: {
     return;
   }
 
+  const content = `
+    <h2 style="color: #111827; margin-top: 0;">Meeting Cancelled</h2>
+    <p>Hi ${attendeeName},</p>
+    <p>Your scheduled meeting with <span class="strong">${hostName}</span> has been cancelled.</p>
+    
+    <div class="details">
+      <p><span class="strong">What:</span> ${eventTitle}</p>
+      <p><span class="strong">When:</span> ${formatted} (${timezone})</p>
+      ${reason ? `<p style="margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px;"><span class="strong">Reason for cancellation:</span><br/>"${reason}"</p>` : ""}
+    </div>
+  `;
+
   await resend.emails.send({
     from: FROM,
     to: attendeeEmail,
     subject: `Cancelled: ${eventTitle} with ${hostName}`,
-    html: `
-      <h2>Your meeting has been cancelled</h2>
-      <p>Hi ${attendeeName},</p>
-      <p>Your <strong>${eventTitle}</strong> with <strong>${hostName}</strong> scheduled for <strong>${formatted} (${timezone})</strong> has been cancelled.</p>
-      ${reason ? `<p>Reason: ${reason}</p>` : ""}
-    `,
+    html: EmailWrapper(content),
   });
 }
