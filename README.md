@@ -84,15 +84,18 @@ POST   /api/public/bookings/:uid/cancel  attendee self-cancel
 - public booking page with calendar picker and real-time slot display
 - double-booking prevention
 - booking cancellation and rescheduling
-- email notifications via resend (confirmation, cancellation, reschedule)
+- **beautiful, responsive HTML email notifications** via resend (confirmation, cancellation, reschedule)
 - redis caching with cache invalidation on writes
 - dst-aware slot calculation using `Intl.DateTimeFormat`
 - responsive design (desktop sidebar + mobile bottom nav)
+- **fully automated CI/CD pipeline** (GitHub Actions with integration testing)
 
 ## deployment
 
 | | |
 |---|---|
-| frontend | vercel — [cal-clone-olive.vercel.app](https://cal-clone-olive.vercel.app) |
-| backend + db + redis | azure container instances |
+| frontend | Vercel CI/CD — [cal-clone-olive.vercel.app](https://cal-clone-olive.vercel.app) |
+| backend + db + redis | Azure Container Instances (ACI) |
+| continuous integration | GitHub Actions (Auto-tests & built-in PostgreSQL/Redis services) |
+| continuous deployment | GitHub Actions (Auto-builds & deploys to Azure on merge to `main`) |
 | public booking page | [cal-clone-olive.vercel.app/risshi](https://cal-clone-olive.vercel.app/risshi) |
