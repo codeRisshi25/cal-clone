@@ -58,8 +58,8 @@ properties:
         image: calcloneacr25.azurecr.io/cal-clone-api:latest
         resources:
           requests:
-            cpu: 0.5
-            memoryInGB: 0.5
+            cpu: 1.0
+            memoryInGB: 1.5
         ports:
           - port: 8000
             protocol: TCP
