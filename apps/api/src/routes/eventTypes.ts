@@ -111,7 +111,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     select: { id: true },
   });
   if (bookings.length > 0) {
-    const bookingIds = bookings.map((b) => b.id);
+    const bookingIds = bookings.map((b: any) => b.id);
     await prisma.attendee.deleteMany({ where: { bookingId: { in: bookingIds } } });
     await prisma.booking.deleteMany({ where: { eventTypeId: req.params.id } });
   }
