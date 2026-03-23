@@ -70,15 +70,15 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: azure/docker-login@v1
         with:
-          login-server: calcloneacr25.azurecr.io
-          username: calcloneacr25
+          login-server: calcloneacr26.azurecr.io
+          username: calcloneacr26
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and Push Docker Image
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          docker build -t calcloneacr25.azurecr.io/cal-clone-api:latest .
-          docker push calcloneacr25.azurecr.io/cal-clone-api:latest
+          docker build -t calcloneacr26.azurecr.io/cal-clone-api:latest .
+          docker push calcloneacr26.azurecr.io/cal-clone-api:latest
 
       - name: Replace Secrets in Deployment Template
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

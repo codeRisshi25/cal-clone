@@ -11,8 +11,8 @@ properties:
       - protocol: TCP
         port: 8000
   imageRegistryCredentials:
-    - server: calcloneacr25.azurecr.io
-      username: calcloneacr25
+    - server: calcloneacr26.azurecr.io
+      username: calcloneacr26
       password: ${ACR_PASSWORD}  # Set via environment variable, do not commit real credentials
   containers:
     # ── PostgreSQL ──────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ properties:
     # ── API ─────────────────────────────────────────────────────────────────
     - name: api
       properties:
-        image: calcloneacr25.azurecr.io/cal-clone-api:latest
+        image: calcloneacr26.azurecr.io/cal-clone-api:latest
         resources:
           requests:
             cpu: 1.0
