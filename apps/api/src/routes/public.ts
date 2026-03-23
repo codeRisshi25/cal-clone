@@ -143,7 +143,7 @@ router.get("/:username/:slug/slots", async (req: Request, res: Response) => {
 
   const existingBookings = await prisma.booking.findMany({
     where: {
-      eventTypeId: eventType.id,
+      userId: user.id,
       status: { in: ["ACCEPTED", "PENDING"] },
       startTime: { gte: dayStart, lte: dayEnd },
     },
@@ -180,35 +180,48 @@ router.post("/:username/:slug/book", async (req: Request, res: Response) => {
   const startTime = new Date(parse.data.startTime);
   const endTime = new Date(startTime.getTime() + eventType.length * 60 * 1000);
 
-  // Double-booking check — ensure no ACCEPTED/PENDING booking overlaps this slot
-  const conflict = await prisma.booking.findFirst({
-    where: {
-      eventTypeId: eventType.id,
-      status: { in: ["ACCEPTED", "PENDING"] },
-      startTime: { lt: endTime },
-      endTime: { gt: startTime },
-    },
-  });
-  if (conflict) return res.status(409).json({ error: "This slot is no longer available" });
-
-  const booking = await prisma.booking.create({
-    data: {
-      title: `${parse.data.name} / ${eventType.title}`,
-      startTime,
-      endTime,
-      status: "ACCEPTED",
-      eventTypeId: eventType.id,
-      userId: user.id,
-      attendee: {
-        create: {
-          name: parse.data.name,
-          email: parse.data.email,
-          timezone: parse.data.timezone,
+  // Double-booking check and creation wrapped in an atomic serializable transaction
+  // to prevent Time-Of-Check to Time-Of-Use (TOCTOU) race conditions.
+  let booking;
+  try {
+    booking = await prisma.$transaction(async (tx) => {
+      const conflict = await tx.booking.findFirst({
+        where: {
+          userId: user.id,
+          status: { in: ["ACCEPTED", "PENDING"] },
+          startTime: { lt: endTime },
+          endTime: { gt: startTime },
         },
-      },
-    },
-    include: { attendee: true, eventType: true },
-  });
+      });
+      
+      if (conflict) throw new Error("CONFLICT");
+
+      return tx.booking.create({
+        data: {
+          title: `${parse.data.name} / ${eventType.title}`,
+          startTime,
+          endTime,
+          status: "ACCEPTED",
+          eventTypeId: eventType.id,
+          userId: user.id,
+          attendee: {
+            create: {
+              name: parse.data.name,
+              email: parse.data.email,
+              timezone: parse.data.timezone,
+            },
+          },
+        },
+        include: { attendee: true, eventType: true },
+      });
+    }, { isolationLevel: "Serializable" });
+  } catch (err: any) {
+    if (err.message === "CONFLICT") {
+      return res.status(409).json({ error: "This slot is no longer available" });
+    }
+    // Let Express error boundary catch real database crashes
+    throw err;
+  }
 
   // Invalidate admin bookings cache and the slot cache for this date
   const dateStr = startTime.toISOString().slice(0, 10);
