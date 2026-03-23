@@ -6,7 +6,7 @@ properties:
   restartPolicy: Always
   ipAddress:
     type: Public
-    dnsNameLabel: calclone-api
+    dnsNameLabel: calclone-api-v2
     ports:
       - protocol: TCP
         port: 8000
